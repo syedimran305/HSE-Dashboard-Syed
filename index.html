@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Syed Imran's Test Dashboard — HSE Inspection</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg:#f5f5f3;--surface:#ffffff;--surface2:#f0eeea;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);
+  --text:#1a1a18;--text2:#6b6b68;--text3:#999994;
+  --radius:10px;--radius-lg:14px;--shadow:0 1px 3px rgba(0,0,0,0.08);
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1a1a18;--surface:#242422;--surface2:#2e2e2b;
+  --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.18);
+  --text:#f0eeea;--text2:#a0a09b;--text3:#6b6b68;}
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;}
+a{color:inherit;text-decoration:none;}
+.shell{display:flex;min-height:100vh;}
+.sidebar{width:224px;background:var(--surface);border-right:0.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;}
+.main{flex:1;overflow:auto;}
+.page{display:none;padding:24px;}
+.page.active{display:block;}
+.sb-brand{padding:20px 16px 14px;border-bottom:0.5px solid var(--border);}
+.sb-brand-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.3;}
+.sb-brand-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+.sb-live{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:10px;color:var(--text3);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;animation:pulse 1.5s infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.sb-nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);transition:all .15s;border:none;background:none;width:100%;text-align:left;}
+.sb-item:hover{background:var(--surface2);color:var(--text);}
+.sb-item.active{background:#534ab7;color:#fff;}
+.sb-item i{font-size:16px;flex-shrink:0;}
+.sb-section{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);padding:10px 10px 4px;margin-top:4px;}
+.sb-footer{padding:12px 16px;border-top:0.5px solid var(--border);}
+.clock-badge{font-size:11px;color:var(--text2);font-variant-numeric:tabular-nums;}
+.page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px;}
+.page-title{font-size:18px;font-weight:600;color:var(--text);}
+.page-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.hdr-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:20px 0 10px;display:flex;align-items:center;gap:8px;}
+.section-label::after{content:'';flex:1;height:0.5px;background:var(--border);}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-bottom:20px;}
+.kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);}
+.kpi-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.kpi-val{font-size:26px;font-weight:600;line-height:1;}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:3px;}
+.haz-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
+.haz-tile{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 10px;text-align:center;box-shadow:var(--shadow);}
+.haz-icon{font-size:20px;margin-bottom:5px;}
+.haz-num{font-size:22px;font-weight:600;line-height:1;margin-bottom:2px;}
+.haz-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);}
+.haz-pct{font-size:10px;margin-top:3px;color:var(--text3);}
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow);}
+.card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:12px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.act-cond-split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.chart-wrap{position:relative;width:100%;}
+.mini-bar{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;}
+.mini-bar-label{width:96px;color:var(--text2);flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mini-bar-track{flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+.mini-bar-fill{height:100%;border-radius:4px;transition:width .5s ease;}
+.mini-bar-count{width:22px;font-weight:600;color:var(--text);text-align:right;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:10px;color:var(--text2);margin-bottom:10px;}
+.legend span{display:flex;align-items:center;gap:4px;}
+.legend-dot{width:9px;height:9px;border-radius:2px;display:inline-block;}
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+.b-critical{background:#fcebeb;color:#a32d2d;}
+.b-high{background:#faeeda;color:#854f0b;}
+.b-medium{background:#e6f1fb;color:#185fa5;}
+.b-low{background:#eaf3de;color:#3b6d11;}
+.b-act{background:#fbeaf0;color:#72243e;}
+.b-cond{background:#eeedfe;color:#3c3489;}
+.b-physical{background:#faeeda;color:#633806;}
+.b-chemical{background:#fcebeb;color:#791f1f;}
+.b-biological{background:#eaf3de;color:#27500a;}
+.b-psychosocial{background:#fbeaf0;color:#72243e;}
+.b-environmental{background:#e1f5ee;color:#085041;}
+.btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:0 12px;height:32px;border-radius:var(--radius);cursor:pointer;white-space:nowrap;transition:all .15s;border:none;}
+.btn i{font-size:14px;}
+.btn-primary{background:#534ab7;color:#fff;}
+.btn-primary:hover{background:#3c3489;}
+.btn-success{background:#1d9e75;color:#fff;}
+.btn-success:hover{background:#0f6e56;}
+.btn-outline{background:var(--surface);color:var(--text);border:0.5px solid var(--border2);}
+.btn-outline:hover{background:var(--surface2);}
+.btn-danger{background:#e24b4a;color:#fff;padding:0 8px;height:26px;font-size:10px;}
+.btn-danger:hover{background:#a32d2d;}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.toolbar select,.toolbar input[type=text]{font-size:11px;padding:4px 8px;border-radius:var(--radius);height:30px;border:0.5px solid var(--border2);background:var(--surface);color:var(--text);}
+.toolbar input[type=text]{width:150px;}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:14px;}
+.stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;box-shadow:var(--shadow);}
+.stat-label{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:3px;}
+.stat-val{font-size:20px;font-weight:600;}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:11px;}
+th{text-align:left;padding:8px;border-bottom:0.5px solid var(--border);color:var(--text2);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;cursor:pointer;user-select:none;background:var(--surface2);}
+th:hover{color:var(--text);}
+th .si{opacity:.35;font-size:9px;margin-left:2px;}
+th.sorted .si{opacity:1;}
+td{padding:8px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface2);}
+.overdue{color:#e24b4a;font-weight:600;}
+.ontime{color:#1d9e75;font-weight:600;}
+.pagination{display:flex;align-items:center;gap:5px;margin-top:12px;justify-content:flex-end;flex-wrap:wrap;}
+.pg-btn{font-size:11px;padding:4px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;}
+.pg-btn:hover{background:var(--surface2);}
+.pg-btn.active-pg{background:#534ab7;color:#fff;border-color:#534ab7;}
+.pg-btn:disabled{opacity:.35;cursor:default;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.modal{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.modal-title{font-size:15px;font-weight:600;}
+.close-btn{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text2);line-height:1;padding:2px 6px;border-radius:6px;}
+.close-btn:hover{background:var(--surface2);color:var(--text);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:11px;font-weight:600;color:var(--text2);}
+.req{color:#e24b4a;}
+.form-group input,.form-group select,.form-group textarea{font-size:12px;padding:7px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--surface);color:var(--text);width:100%;}
+.form-group textarea{resize:vertical;min-height:64px;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#534ab7;box-shadow:0 0 0 3px rgba(83,74,183,.15);}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
+.form-err{font-size:11px;color:#e24b4a;margin-top:8px;display:none;}
+.toast{position:fixed;bottom:24px;right:24px;background:#1d9e75;color:#fff;font-size:12px;font-weight:500;padding:10px 18px;border-radius:var(--radius);z-index:2000;opacity:0;transform:translateY(10px);transition:all .25s;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+.toast.show{opacity:1;transform:translateY(0);}
+.empty-state{text-align:center;padding:2.5rem;color:var(--text3);font-size:13px;}
+.empty-state i{font-size:32px;display:block;margin-bottom:10px;}
+@media(max-width:720px){
+  .sidebar{display:none;}
+  .grid2,.act-cond-split{grid-template-columns:1fr;}
+  .haz-grid{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-brand-name">Syed Imran's Test Dashboard</div>
+      <div class="sb-brand-sub">Syed Imran Insp Dashboard Test LTD</div>
+      <div class="sb-live"><div class="live-dot"></div><span id="ticker">HSE Inspection Portal</span></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">Main</div>
+      <button class="sb-item active" onclick="nav('dashboard')"><i class="ti ti-dashboard"></i>Dashboard</button>
+      <button class="sb-item" onclick="nav('findings')"><i class="ti ti-list"></i>All Findings</button>
+      <button class="sb-item" onclick="nav('summary')"><i class="ti ti-chart-bar"></i>Summary</button>
+    </nav>
+    <div class="sb-footer">
+      <div class="clock-badge" id="clock">--:--:--</div>
+      <div style="font-size:9px;color:var(--text3);margin-top:2px;">Live · UAE Time</div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-hdr">
+        <div>
+          <div class="page-title">HSE Inspection Overview</div>
+          <div class="page-sub">Syed Imran Insp Dashboard Test LTD · All departments</div>
+        </div>
+        <div class="hdr-actions">
+          <button class="btn btn-success" onclick="downloadCSV('all')"><i class="ti ti-download"></i>Export CSV</button>
+          <button class="btn btn-primary" onclick="openModal()"><i class="ti ti-plus"></i>Add finding</button>
+        </div>
+      </div>
+
+      <div class="section-label">Risk overview</div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Total findings</div><div class="kpi-val" id="d-total" style="color:#378add">—</div><div class="kpi-sub">All records</div></div>
+        <div class="kpi"><div class="kpi-label">Critical</div><div class="kpi-val" id="d-crit" style="color:#e24b4a">—</div><div class="kpi-sub">Immediate action</div></div>
+        <div class="kpi"><div class="kpi-label">High risk</div><div class="kpi-val" id="d-high" style="color:#ef9f27">—</div><div class="kpi-sub">Priority attention</div></div>
+        <div class="kpi"><div class="kpi-label">Medium risk</div><div class="kpi-val" id="d-med" style="color:#378add">—</div><div class="kpi-sub">Monitor closely</div></div>
+        <div class="kpi"><div class="kpi-label">Low risk</div><div class="kpi-val" id="d-low" style="color:#639922">—</div><div class="kpi-sub">Routine closure</div></div>
+        <div class="kpi"><div class="kpi-label">Overdue</div><div class="kpi-val" id="d-od" style="color:#e24b4a">—</div><div class="kpi-sub">Past target date</div></div>
+        <div class="kpi"><div class="kpi-label">On time</div><div class="kpi-val" id="d-ontime" style="color:#1d9e75">—</div><div class="kpi-sub">Closed ≤ target</div></div>
+        <div class="kpi"><div class="kpi-label">Avg overdue</div><div class="kpi-val" id="d-avgod">—</div><div class="kpi-sub">Days delayed</div></div>
+      </div>
+
+      <div class="section-label">Hazard classification</div>
+      <div class="haz-grid">
+        <div class="haz-tile"><div class="haz-icon" style="color:#ba7517"><i class="ti ti-hammer"></i></div><div class="haz-num" id="h-physical" style="color:#ba7517">—</div><div class="haz-lbl">Physical</div><div class="haz-pct" id="hp-physical">—</div></div>
+        <div class="haz-tile"><div class="haz-icon" style="color:#a32d2d"><i class="ti ti-flask"></i></div><div class="haz-num" id="h-chemical" style="color:#a32d2d">—</div><div class="haz-lbl">Chemical</div><div class="haz-pct" id="hp-chemical">—</div></div>
+        <div class="haz-tile"><div class="haz-icon" style="color:#3b6d11"><i class="ti ti-virus"></i></div><div class="haz-num" id="h-biological" style="color:#3b6d11">—</div><div class="haz-lbl">Biological</div><div class="haz-pct" id="hp-biological">—</div></div>
+        <div class="haz-tile"><div class="haz-icon" style="color:#d4537e"><i class="ti ti-brain"></i></div><div class="haz-num" id="h-psychosocial" style="color:#d4537e">—</div><div class="haz-lbl">Psychosocial</div><div class="haz-pct" id="hp-psychosocial">—</div></div>
+        <div class="haz-tile"><div class="haz-icon" style="color:#0f6e56"><i class="ti ti-leaf"></i></div><div class="haz-num" id="h-environmental" style="color:#0f6e56">—</div><div class="haz-lbl">Environmental</div><div class="haz-pct" id="hp-environmental">—</div></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Risk level breakdown</div>
+          <div id="d-risk-bars"></div>
+          <div class="chart-wrap" style="height:160px;margin-top:12px"><canvas id="chartRisk" role="img" aria-label="Donut chart risk levels"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Findings by department</div>
+          <div id="d-dept-bars"></div>
+          <div class="chart-wrap" style="height:160px;margin-top:12px"><canvas id="chartDept" role="img" aria-label="Bar chart by department"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">Hazard type — by department</div>
+        <div class="legend">
+          <span><span class="legend-dot" style="background:#ba7517"></span>Physical</span>
+          <span><span class="legend-dot" style="background:#e24b4a"></span>Chemical</span>
+          <span><span class="legend-dot" style="background:#639922"></span>Biological</span>
+          <span><span class="legend-dot" style="background:#d4537e"></span>Psychosocial</span>
+          <span><span class="legend-dot" style="background:#0f6e56"></span>Environmental</span>
+        </div>
+        <div class="chart-wrap" style="height:160px"><canvas id="chartHazDept" role="img" aria-label="Stacked bar hazard by dept"></canvas></div>
+      </div>
+
+      <div class="section-label">Unsafe acts vs unsafe conditions</div>
+      <div class="act-cond-split">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:600;color:#d4537e"><i class="ti ti-user-exclamation" style="margin-right:4px"></i>Unsafe acts</div>
+            <span class="badge b-act" id="d-act-pct">—</span>
+          </div>
+          <div id="d-k-act" style="font-size:28px;font-weight:700;color:#d4537e;margin-bottom:4px">—</div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:10px">Human behaviour-driven findings</div>
+          <div id="d-act-list"></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:600;color:#534ab7"><i class="ti ti-alert-triangle" style="margin-right:4px"></i>Unsafe conditions</div>
+            <span class="badge b-cond" id="d-cond-pct">—</span>
+          </div>
+          <div id="d-k-cond" style="font-size:28px;font-weight:700;color:#534ab7;margin-bottom:4px">—</div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:10px">Physical / environmental hazards</div>
+          <div id="d-cond-list"></div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Acts vs conditions — by department</div>
+          <div class="legend">
+            <span><span class="legend-dot" style="background:#d4537e"></span>Unsafe acts</span>
+            <span><span class="legend-dot" style="background:#534ab7"></span>Unsafe conditions</span>
+          </div>
+          <div class="chart-wrap" style="height:155px"><canvas id="chartActCond" role="img" aria-label="Acts vs conditions stacked"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Inspector — total overdue days</div>
+          <div class="chart-wrap" style="height:175px"><canvas id="chartInsp" role="img" aria-label="Overdue days per inspector"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ALL FINDINGS ══ -->
+    <div id="page-findings" class="page">
+      <div class="page-hdr">
+        <div>
+          <div class="page-title">All Findings</div>
+          <div class="page-sub">Complete inspection log — filter, sort and manage</div>
+        </div>
+        <div class="hdr-actions">
+          <button class="btn btn-outline" onclick="resetFilters()"><i class="ti ti-refresh"></i>Reset</button>
+          <button class="btn btn-success" onclick="downloadCSV('filtered')"><i class="ti ti-download"></i>Download CSV</button>
+          <button class="btn btn-primary" onclick="openModal()"><i class="ti ti-plus"></i>Add finding</button>
+        </div>
+      </div>
+
+      <div class="stat-row" id="f-stat-row"></div>
+
+      <div class="toolbar">
+        <select id="fDept"><option value="">All departments</option></select>
+        <select id="fRisk"><option value="">All risk levels</option></select>
+        <select id="fType"><option value="">Act &amp; condition</option><option value="Act">Unsafe act</option><option value="Condition">Unsafe condition</option></select>
+        <select id="fHaz"><option value="">All hazard types</option><option value="Physical">Physical</option><option value="Chemical">Chemical</option><option value="Biological">Biological</option><option value="Psychosocial">Psychosocial</option><option value="Environmental">Environmental</option></select>
+        <select id="fOD"><option value="">All statuses</option><option value="overdue">Overdue only</option><option value="ontime">On time only</option></select>
+        <input type="text" id="fSearch" placeholder="Search finding or inspector…" />
+        <span style="font-size:10px;color:var(--text3);margin-left:auto" id="rowCount"></span>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortBy('id')" style="width:4%">#<span class="si" id="si-id">↕</span></th>
+                <th onclick="sortBy('finding')" style="width:19%">Finding<span class="si" id="si-finding">↕</span></th>
+                <th onclick="sortBy('type')" style="width:7%">Type<span class="si" id="si-type">↕</span></th>
+                <th onclick="sortBy('hazard')" style="width:11%">Hazard<span class="si" id="si-hazard">↕</span></th>
+                <th onclick="sortBy('dept')" style="width:11%">Department<span class="si" id="si-dept">↕</span></th>
+                <th onclick="sortBy('risk')" style="width:8%">Risk<span class="si" id="si-risk">↕</span></th>
+                <th onclick="sortBy('inspector')" style="width:9%">Inspector<span class="si" id="si-inspector">↕</span></th>
+                <th onclick="sortBy('target')" style="width:8%">Target<span class="si" id="si-target">↕</span></th>
+                <th onclick="sortBy('closed')" style="width:8%">Closed<span class="si" id="si-closed">↕</span></th>
+                <th onclick="sortBy('overdue')" style="width:6%">OD<span class="si" id="si-overdue">↕</span></th>
+                <th style="width:5%"></th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div id="empty-msg" class="empty-state" style="display:none"><i class="ti ti-search-off"></i>No findings match your filters.</div>
+        <div class="pagination" id="pagination" style="padding:10px 16px"></div>
+      </div>
+    </div>
+
+    <!-- ══ SUMMARY ══ -->
+    <div id="page-summary" class="page">
+      <div class="page-hdr">
+        <div>
+          <div class="page-title">Summary Report</div>
+          <div class="page-sub" id="sum-sub">Aggregated statistics across all findings</div>
+        </div>
+        <div class="hdr-actions">
+          <button class="btn btn-success" onclick="downloadCSV('all')"><i class="ti ti-download"></i>Export all CSV</button>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-title">Risk level breakdown</div><div id="s-risk"></div></div>
+        <div class="card"><div class="card-title">Hazard classification</div><div id="s-haz"></div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-title">By department</div><div id="s-dept"></div></div>
+        <div class="card"><div class="card-title">By inspector</div><div id="s-insp"></div></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">Unsafe act vs unsafe condition</div>
+        <div class="grid2" id="s-actcond"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══ ADD FINDING MODAL ══ -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="closeModalOverlay(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-plus" style="color:#534ab7;margin-right:6px"></i>Add new finding</div>
+      <button class="close-btn" onclick="closeModal()">×</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label class="form-label">Finding / Unsafe observation <span class="req">*</span></label>
+        <textarea id="f-finding" placeholder="Describe the unsafe act or condition observed…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Department <span class="req">*</span></label>
+        <select id="f-dept"><option value="">Select…</option><option>Construction</option><option>Electrical</option><option>Mechanical</option><option>Civil</option><option>Logistics</option><option>Maintenance</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Risk level <span class="req">*</span></label>
+        <select id="f-risk"><option value="">Select…</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type <span class="req">*</span></label>
+        <select id="f-type-modal"><option value="">Select…</option><option value="Act">Unsafe act</option><option value="Condition">Unsafe condition</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hazard classification <span class="req">*</span></label>
+        <select id="f-hazard"><option value="">Select…</option><option>Physical</option><option>Chemical</option><option>Biological</option><option>Psychosocial</option><option>Environmental</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Inspected by <span class="req">*</span></label>
+        <input type="text" id="f-inspector" placeholder="Inspector name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Image reference</label>
+        <input type="text" id="f-img" placeholder="e.g. IMG-041.jpg" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target date <span class="req">*</span></label>
+        <input type="date" id="f-target" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Closure date</label>
+        <input type="date" id="f-closed" />
+      </div>
+    </div>
+    <div class="form-err" id="form-err"></div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitFinding()"><i class="ti ti-check"></i>Save finding</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const UNSAFE_ACTS=new Set(['Poor manual handling practice','Unsafe ladder usage','Improper PPE usage','Overloaded electrical socket']);
+const HAZARD_MAP={'Scaffolding without guardrails':'Physical','Exposed electrical wiring':'Physical','Chemical drums not labeled':'Chemical','Blocked emergency exit':'Physical','Poor manual handling practice':'Psychosocial','Oil spill not cleaned':'Environmental','Unsafe ladder usage':'Physical','Fire extinguisher expired':'Physical','Improper PPE usage':'Psychosocial','Overloaded electrical socket':'Physical'};
+const RISK_ORDER={Critical:0,High:1,Medium:2,Low:3};
+const RISK_COLORS={Critical:'#e24b4a',High:'#ef9f27',Medium:'#378add',Low:'#639922'};
+const HAZ_COLORS={Physical:'#ba7517',Chemical:'#e24b4a',Biological:'#639922',Psychosocial:'#d4537e',Environmental:'#0f6e56'};
+const HAZ_BADGE={Physical:'b-physical',Chemical:'b-chemical',Biological:'b-biological',Psychosocial:'b-psychosocial',Environmental:'b-environmental'};
+const HAZ_TYPES=['Physical','Chemical','Biological','Psychosocial','Environmental'];
+const DEPTS=['Construction','Electrical','Mechanical','Civil','Logistics','Maintenance'];
+const DEPT_COLORS=['#534ab7','#1d9e75','#d85a30','#d4537e','#378add','#ba7517'];
+
+let DATA=[
+  {id:1,dept:'Construction',risk:'Low',finding:'Scaffolding without guardrails',inspector:'A. Khan',target:'2026-01-05',closed:'2026-01-05',overdue:0,img:'IMG-001.jpg'},
+  {id:2,dept:'Electrical',risk:'Medium',finding:'Exposed electrical wiring',inspector:'S. Patel',target:'2026-01-12',closed:'2026-01-13',overdue:1,img:'IMG-002.jpg'},
+  {id:3,dept:'Mechanical',risk:'High',finding:'Chemical drums not labeled',inspector:'M. Rahman',target:'2026-01-19',closed:'2026-01-21',overdue:2,img:'IMG-003.jpg'},
+  {id:4,dept:'Civil',risk:'Critical',finding:'Blocked emergency exit',inspector:'L. Gomez',target:'2026-01-26',closed:'2026-01-30',overdue:4,img:'IMG-004.jpg'},
+  {id:5,dept:'Logistics',risk:'Low',finding:'Poor manual handling practice',inspector:'R. Singh',target:'2026-02-02',closed:'2026-02-02',overdue:0,img:'IMG-005.jpg'},
+  {id:6,dept:'Maintenance',risk:'Medium',finding:'Oil spill not cleaned',inspector:'T. Ahmed',target:'2026-02-09',closed:'2026-02-10',overdue:1,img:'IMG-006.jpg'},
+  {id:7,dept:'Construction',risk:'High',finding:'Unsafe ladder usage',inspector:'A. Khan',target:'2026-02-16',closed:'2026-02-18',overdue:2,img:'IMG-007.jpg'},
+  {id:8,dept:'Electrical',risk:'Critical',finding:'Fire extinguisher expired',inspector:'S. Patel',target:'2026-02-23',closed:'2026-02-27',overdue:4,img:'IMG-008.jpg'},
+  {id:9,dept:'Mechanical',risk:'Low',finding:'Improper PPE usage',inspector:'M. Rahman',target:'2026-03-02',closed:'2026-03-02',overdue:0,img:'IMG-009.jpg'},
+  {id:10,dept:'Civil',risk:'Medium',finding:'Overloaded electrical socket',inspector:'L. Gomez',target:'2026-03-09',closed:'2026-03-10',overdue:1,img:'IMG-010.jpg'},
+  {id:11,dept:'Logistics',risk:'High',finding:'Scaffolding without guardrails',inspector:'R. Singh',target:'2026-03-16',closed:'2026-03-18',overdue:2,img:'IMG-011.jpg'},
+  {id:12,dept:'Maintenance',risk:'Critical',finding:'Exposed electrical wiring',inspector:'T. Ahmed',target:'2026-03-23',closed:'2026-03-27',overdue:4,img:'IMG-012.jpg'},
+  {id:13,dept:'Construction',risk:'Low',finding:'Chemical drums not labeled',inspector:'A. Khan',target:'2026-03-30',closed:'2026-03-30',overdue:0,img:'IMG-013.jpg'},
+  {id:14,dept:'Electrical',risk:'Medium',finding:'Blocked emergency exit',inspector:'S. Patel',target:'2026-04-06',closed:'2026-04-07',overdue:1,img:'IMG-014.jpg'},
+  {id:15,dept:'Mechanical',risk:'High',finding:'Poor manual handling practice',inspector:'M. Rahman',target:'2026-04-13',closed:'2026-04-15',overdue:2,img:'IMG-015.jpg'},
+  {id:16,dept:'Civil',risk:'Critical',finding:'Oil spill not cleaned',inspector:'L. Gomez',target:'2026-04-20',closed:'2026-04-24',overdue:4,img:'IMG-016.jpg'},
+  {id:17,dept:'Logistics',risk:'Low',finding:'Unsafe ladder usage',inspector:'R. Singh',target:'2026-04-27',closed:'2026-04-27',overdue:0,img:'IMG-017.jpg'},
+  {id:18,dept:'Maintenance',risk:'Medium',finding:'Fire extinguisher expired',inspector:'T. Ahmed',target:'2026-05-04',closed:'2026-05-05',overdue:1,img:'IMG-018.jpg'},
+  {id:19,dept:'Construction',risk:'High',finding:'Improper PPE usage',inspector:'A. Khan',target:'2026-05-11',closed:'2026-05-13',overdue:2,img:'IMG-019.jpg'},
+  {id:20,dept:'Electrical',risk:'Critical',finding:'Overloaded electrical socket',inspector:'S. Patel',target:'2026-05-18',closed:'2026-05-22',overdue:4,img:'IMG-020.jpg'},
+  {id:21,dept:'Mechanical',risk:'Low',finding:'Scaffolding without guardrails',inspector:'M. Rahman',target:'2026-05-25',closed:'2026-05-25',overdue:0,img:'IMG-021.jpg'},
+  {id:22,dept:'Civil',risk:'Medium',finding:'Exposed electrical wiring',inspector:'L. Gomez',target:'2026-06-01',closed:'2026-06-02',overdue:1,img:'IMG-022.jpg'},
+  {id:23,dept:'Logistics',risk:'High',finding:'Chemical drums not labeled',inspector:'R. Singh',target:'2026-06-08',closed:'2026-06-10',overdue:2,img:'IMG-023.jpg'},
+  {id:24,dept:'Maintenance',risk:'Critical',finding:'Blocked emergency exit',inspector:'T. Ahmed',target:'2026-06-15',closed:'2026-06-19',overdue:4,img:'IMG-024.jpg'},
+  {id:25,dept:'Construction',risk:'Low',finding:'Poor manual handling practice',inspector:'A. Khan',target:'2026-06-22',closed:'2026-06-22',overdue:0,img:'IMG-025.jpg'},
+  {id:26,dept:'Electrical',risk:'Medium',finding:'Oil spill not cleaned',inspector:'S. Patel',target:'2026-06-29',closed:'2026-06-30',overdue:1,img:'IMG-026.jpg'},
+  {id:27,dept:'Mechanical',risk:'High',finding:'Unsafe ladder usage',inspector:'M. Rahman',target:'2026-07-06',closed:'2026-07-08',overdue:2,img:'IMG-027.jpg'},
+  {id:28,dept:'Civil',risk:'Critical',finding:'Fire extinguisher expired',inspector:'L. Gomez',target:'2026-07-13',closed:'2026-07-17',overdue:4,img:'IMG-028.jpg'},
+  {id:29,dept:'Logistics',risk:'Low',finding:'Improper PPE usage',inspector:'R. Singh',target:'2026-07-20',closed:'2026-07-20',overdue:0,img:'IMG-029.jpg'},
+  {id:30,dept:'Maintenance',risk:'Medium',finding:'Overloaded electrical socket',inspector:'T. Ahmed',target:'2026-07-27',closed:'2026-07-28',overdue:1,img:'IMG-030.jpg'},
+  {id:31,dept:'Construction',risk:'High',finding:'Scaffolding without guardrails',inspector:'A. Khan',target:'2026-08-03',closed:'2026-08-05',overdue:2,img:'IMG-031.jpg'},
+  {id:32,dept:'Electrical',risk:'Critical',finding:'Exposed electrical wiring',inspector:'S. Patel',target:'2026-08-10',closed:'2026-08-14',overdue:4,img:'IMG-032.jpg'},
+  {id:33,dept:'Mechanical',risk:'Low',finding:'Chemical drums not labeled',inspector:'M. Rahman',target:'2026-08-17',closed:'2026-08-17',overdue:0,img:'IMG-033.jpg'},
+  {id:34,dept:'Civil',risk:'Medium',finding:'Blocked emergency exit',inspector:'L. Gomez',target:'2026-08-24',closed:'2026-08-25',overdue:1,img:'IMG-034.jpg'},
+  {id:35,dept:'Logistics',risk:'High',finding:'Poor manual handling practice',inspector:'R. Singh',target:'2026-08-31',closed:'2026-09-02',overdue:2,img:'IMG-035.jpg'},
+  {id:36,dept:'Maintenance',risk:'Critical',finding:'Oil spill not cleaned',inspector:'T. Ahmed',target:'2026-09-07',closed:'2026-09-11',overdue:4,img:'IMG-036.jpg'},
+  {id:37,dept:'Construction',risk:'Low',finding:'Unsafe ladder usage',inspector:'A. Khan',target:'2026-09-14',closed:'2026-09-14',overdue:0,img:'IMG-037.jpg'},
+  {id:38,dept:'Electrical',risk:'Medium',finding:'Fire extinguisher expired',inspector:'S. Patel',target:'2026-09-21',closed:'2026-09-22',overdue:1,img:'IMG-038.jpg'},
+  {id:39,dept:'Mechanical',risk:'High',finding:'Improper PPE usage',inspector:'M. Rahman',target:'2026-09-28',closed:'2026-09-30',overdue:2,img:'IMG-039.jpg'},
+  {id:40,dept:'Civil',risk:'Critical',finding:'Overloaded electrical socket',inspector:'L. Gomez',target:'2026-10-05',closed:'2026-10-09',overdue:4,img:'IMG-040.jpg'}
+].map(d=>({...d,type:UNSAFE_ACTS.has(d.finding)?'Act':'Condition',hazard:HAZARD_MAP[d.finding]||'Physical'}));
+
+let filtered=[...DATA],sortCol='id',sortDir=1,currentPage=1;
+const PAGE_SIZE=15;
+
+function nav(page){
+  document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  const btn=document.querySelector(`.sb-item[onclick="nav('${page}')"]`);
+  if(btn)btn.classList.add('active');
+  document.getElementById('page-'+page).classList.add('active');
+  if(page==='dashboard')renderDashboard();
+  if(page==='findings')applyFilters();
+  if(page==='summary')renderSummary();
+}
+
+function miniBar(label,val,max,color){
+  return`<div class="mini-bar"><div class="mini-bar-label" title="${label}">${label}</div><div class="mini-bar-track"><div class="mini-bar-fill" style="width:${Math.round(val/max*100)}%;background:${color}"></div></div><div class="mini-bar-count">${val}</div></div>`;
+}
+
+function renderOrUpdateChart(id,type,data,opts,cb){
+  const c=document.getElementById(id);if(!c)return;
+  const ex=Chart.getChart(c);
+  if(ex){ex.data=data;ex.update('none');}
+  else{const ch=new Chart(c,{type,data,options:{responsive:true,maintainAspectRatio:false,...opts}});cb&&cb(ch);}
+}
+
+function renderDashboard(){
+  const d=DATA,n=d.length;
+  document.getElementById('d-total').textContent=n;
+  document.getElementById('d-crit').textContent=d.filter(x=>x.risk==='Critical').length;
+  document.getElementById('d-high').textContent=d.filter(x=>x.risk==='High').length;
+  document.getElementById('d-med').textContent=d.filter(x=>x.risk==='Medium').length;
+  document.getElementById('d-low').textContent=d.filter(x=>x.risk==='Low').length;
+  document.getElementById('d-od').textContent=d.filter(x=>x.overdue>0).length;
+  document.getElementById('d-ontime').textContent=d.filter(x=>x.overdue===0).length;
+  document.getElementById('d-avgod').textContent=(n?(d.reduce((s,x)=>s+x.overdue,0)/n).toFixed(1):0)+'d';
+
+  HAZ_TYPES.forEach(h=>{
+    const c=d.filter(x=>x.hazard===h).length;
+    document.getElementById('h-'+h.toLowerCase()).textContent=c;
+    document.getElementById('hp-'+h.toLowerCase()).textContent=(n?Math.round(c/n*100):0)+'% of total';
+  });
+
+  const levels=['Critical','High','Medium','Low'];
+  const riskC={};levels.forEach(l=>riskC[l]=0);d.forEach(x=>riskC[x.risk]++);
+  const maxR=Math.max(...Object.values(riskC),1);
+  document.getElementById('d-risk-bars').innerHTML=levels.map(l=>miniBar(l,riskC[l],maxR,RISK_COLORS[l])).join('');
+  renderOrUpdateChart('chartRisk','doughnut',{labels:levels,datasets:[{data:levels.map(l=>riskC[l]),backgroundColor:levels.map(l=>RISK_COLORS[l]),borderWidth:0}]},{cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+ctx.parsed}}}},()=>{});
+
+  const deptC={};DEPTS.forEach(dep=>deptC[dep]=0);d.forEach(x=>deptC[x.dept]++);
+  const maxD=Math.max(...Object.values(deptC),1);
+  document.getElementById('d-dept-bars').innerHTML=DEPTS.map((dep,i)=>miniBar(dep,deptC[dep],maxD,DEPT_COLORS[i])).join('');
+  renderOrUpdateChart('chartDept','bar',{labels:DEPTS.map(dep=>dep.substring(0,5)),datasets:[{data:DEPTS.map(dep=>deptC[dep]),backgroundColor:DEPT_COLORS,borderRadius:4,borderWidth:0}]},{plugins:{legend:{display:false},tooltip:{callbacks:{title:ctx=>DEPTS[ctx[0].dataIndex]}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(128,128,128,.08)'},ticks:{stepSize:1,font:{size:10}}}}},()=>{});
+
+  const hazDeptData={};DEPTS.forEach(dep=>{hazDeptData[dep]={};HAZ_TYPES.forEach(h=>hazDeptData[dep][h]=0);});
+  d.forEach(x=>{if(hazDeptData[x.dept])hazDeptData[x.dept][x.hazard]++;});
+  renderOrUpdateChart('chartHazDept','bar',{labels:DEPTS.map(dep=>dep.substring(0,5)),datasets:HAZ_TYPES.map(h=>({label:h,data:DEPTS.map(dep=>hazDeptData[dep][h]),backgroundColor:HAZ_COLORS[h],borderRadius:2,borderWidth:0}))},{plugins:{legend:{display:false}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,grid:{color:'rgba(128,128,128,.08)'},ticks:{stepSize:2,font:{size:10}}}}},()=>{});
+
+  const acts=d.filter(x=>x.type==='Act'),conds=d.filter(x=>x.type==='Condition');
+  document.getElementById('d-k-act').textContent=acts.length;
+  document.getElementById('d-k-cond').textContent=conds.length;
+  document.getElementById('d-act-pct').textContent=(n?Math.round(acts.length/n*100):0)+'% of total';
+  document.getElementById('d-cond-pct').textContent=(n?Math.round(conds.length/n*100):0)+'% of total';
+  const aC={},cC={};
+  acts.forEach(x=>aC[x.finding]=(aC[x.finding]||0)+1);
+  conds.forEach(x=>cC[x.finding]=(cC[x.finding]||0)+1);
+  const mA=Math.max(...Object.values(aC),1),mC=Math.max(...Object.values(cC),1);
+  document.getElementById('d-act-list').innerHTML=Object.entries(aC).sort((a,b)=>b[1]-a[1]).map(([k,v])=>miniBar(k,v,mA,'#d4537e')).join('');
+  document.getElementById('d-cond-list').innerHTML=Object.entries(cC).sort((a,b)=>b[1]-a[1]).map(([k,v])=>miniBar(k,v,mC,'#534ab7')).join('');
+
+  const actsD={},condsD={};DEPTS.forEach(dep=>{actsD[dep]=0;condsD[dep]=0;});
+  d.forEach(x=>{if(x.type==='Act')actsD[x.dept]++;else condsD[x.dept]++;});
+  renderOrUpdateChart('chartActCond','bar',{labels:DEPTS.map(dep=>dep.substring(0,5)),datasets:[{label:'Unsafe acts',data:DEPTS.map(dep=>actsD[dep]),backgroundColor:'#d4537e',borderRadius:2,borderWidth:0},{label:'Unsafe conditions',data:DEPTS.map(dep=>condsD[dep]),backgroundColor:'#534ab7',borderRadius:2,borderWidth:0}]},{plugins:{legend:{display:false}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,grid:{color:'rgba(128,128,128,.08)'},ticks:{stepSize:2,font:{size:10}}}}},()=>{});
+
+  const byI={};d.forEach(x=>{if(!byI[x.inspector])byI[x.inspector]=0;byI[x.inspector]+=x.overdue;});
+  const insp=Object.keys(byI),vals=insp.map(i=>byI[i]);
+  renderOrUpdateChart('chartInsp','bar',{labels:insp,datasets:[{label:'Overdue days',data:vals,backgroundColor:'#1d9e75',borderRadius:4,borderWidth:0}]},{plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(128,128,128,.08)'},ticks:{stepSize:2,font:{size:10}}}}},()=>{});
+}
+
+function applyFilters(){
+  const dept=document.getElementById('fDept').value,risk=document.getElementById('fRisk').value,type=document.getElementById('fType').value,haz=document.getElementById('fHaz').value,od=document.getElementById('fOD').value,q=document.getElementById('fSearch').value.toLowerCase();
+  filtered=DATA.filter(d=>(!dept||d.dept===dept)&&(!risk||d.risk===risk)&&(!type||d.type===type)&&(!haz||d.hazard===haz)&&(!od||(od==='overdue'?d.overdue>0:d.overdue===0))&&(!q||d.finding.toLowerCase().includes(q)||d.inspector.toLowerCase().includes(q)||d.dept.toLowerCase().includes(q)));
+  currentPage=1;doSort();renderTable();renderFindingsStats();
+}
+
+function resetFilters(){
+  ['fDept','fRisk','fType','fHaz','fOD'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fSearch').value='';applyFilters();
+}
+
+function doSort(){
+  filtered.sort((a,b)=>{
+    let av=a[sortCol],bv=b[sortCol];
+    if(sortCol==='risk'){av=RISK_ORDER[av];bv=RISK_ORDER[bv];}
+    if(typeof av==='number')return(av-bv)*sortDir;
+    return String(av||'').localeCompare(String(bv||''))*sortDir;
+  });
+}
+
+function sortBy(col){
+  if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=1;}
+  document.querySelectorAll('.si').forEach(el=>el.textContent='↕');
+  const si=document.getElementById('si-'+col);if(si)si.textContent=sortDir===1?'↑':'↓';
+  document.querySelectorAll('th').forEach(th=>th.classList.remove('sorted'));
+  doSort();renderTable();
+}
+
+function renderTable(){
+  const total=filtered.length,pages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+  if(currentPage>pages)currentPage=pages;
+  const start=(currentPage-1)*PAGE_SIZE,end=Math.min(start+PAGE_SIZE,total);
+  const slice=filtered.slice(start,end);
+  document.getElementById('rowCount').textContent=`Showing ${start+1}–${end} of ${total} findings`;
+  const empty=document.getElementById('empty-msg');
+  if(total===0){empty.style.display='block';document.getElementById('tbody').innerHTML='';}
+  else{
+    empty.style.display='none';
+    document.getElementById('tbody').innerHTML=slice.map(d=>`
+      <tr>
+        <td style="color:var(--text3)">${d.id}</td>
+        <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${d.finding}">${d.finding}</td>
+        <td><span class="badge ${d.type==='Act'?'b-act':'b-cond'}">${d.type==='Act'?'Act':'Cond.'}</span></td>
+        <td><span class="badge ${HAZ_BADGE[d.hazard]}">${d.hazard}</span></td>
+        <td>${d.dept}</td>
+        <td><span class="badge b-${d.risk.toLowerCase()}">${d.risk}</span></td>
+        <td>${d.inspector}</td>
+        <td>${d.target.slice(5).replace('-','/')}</td>
+        <td>${d.closed?d.closed.slice(5).replace('-','/'):'—'}</td>
+        <td class="${d.overdue>0?'overdue':'ontime'}">${d.overdue>0?'+'+d.overdue+'d':'✓'}</td>
+        <td><button class="btn btn-danger" onclick="deleteFinding(${d.id})" title="Delete"><i class="ti ti-trash" style="font-size:11px"></i></button></td>
+      </tr>`).join('');
+  }
+  renderPagination(pages);
+}
+
+function renderPagination(pages){
+  const pg=document.getElementById('pagination');
+  if(pages<=1){pg.innerHTML='';return;}
+  let html=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹ Prev</button>`;
+  for(let i=1;i<=pages;i++){
+    if(pages>7&&i>2&&i<pages-1&&Math.abs(i-currentPage)>1){if(i===3||i===pages-2)html+='<span style="font-size:11px;padding:0 2px;color:var(--text3)">…</span>';continue;}
+    html+=`<button class="pg-btn ${i===currentPage?'active-pg':''}" onclick="goPage(${i})">${i}</button>`;
+  }
+  html+=`<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===pages?'disabled':''}>Next ›</button>`;
+  pg.innerHTML=html;
+}
+
+function goPage(p){currentPage=p;renderTable();}
+
+function renderFindingsStats(){
+  const d=filtered,n=d.length;
+  const acts=d.filter(x=>x.type==='Act').length,od=d.filter(x=>x.overdue>0).length;
+  document.getElementById('f-stat-row').innerHTML=`
+    <div class="stat"><div class="stat-label">Total</div><div class="stat-val" style="color:#378add">${n}</div></div>
+    <div class="stat"><div class="stat-label">Critical</div><div class="stat-val" style="color:#e24b4a">${d.filter(x=>x.risk==='Critical').length}</div></div>
+    <div class="stat"><div class="stat-label">High</div><div class="stat-val" style="color:#ef9f27">${d.filter(x=>x.risk==='High').length}</div></div>
+    <div class="stat"><div class="stat-label">Overdue</div><div class="stat-val" style="color:#e24b4a">${od}</div></div>
+    <div class="stat"><div class="stat-label">On time</div><div class="stat-val" style="color:#1d9e75">${n-od}</div></div>
+    <div class="stat"><div class="stat-label">Unsafe acts</div><div class="stat-val" style="color:#d4537e">${acts}</div></div>
+    <div class="stat"><div class="stat-label">Conditions</div><div class="stat-val" style="color:#534ab7">${n-acts}</div></div>
+    <div class="stat"><div class="stat-label">Avg OD</div><div class="stat-val">${(n?(d.reduce((s,x)=>s+x.overdue,0)/n).toFixed(1):0)}d</div></div>`;
+}
+
+function renderSummary(){
+  const d=DATA,n=d.length;
+  document.getElementById('sum-sub').textContent=`Aggregated statistics across all ${n} findings`;
+  const riskC={Critical:0,High:0,Medium:0,Low:0};d.forEach(x=>riskC[x.risk]++);
+  const maxR=Math.max(...Object.values(riskC),1);
+  document.getElementById('s-risk').innerHTML=Object.entries(riskC).map(([k,v])=>miniBar(k,v,maxR,RISK_COLORS[k])).join('');
+  const hazC={Physical:0,Chemical:0,Biological:0,Psychosocial:0,Environmental:0};d.forEach(x=>hazC[x.hazard]=(hazC[x.hazard]||0)+1);
+  const maxH=Math.max(...Object.values(hazC),1);
+  document.getElementById('s-haz').innerHTML=Object.entries(hazC).map(([k,v])=>miniBar(k,v,maxH,HAZ_COLORS[k])).join('');
+  const deptC={};DEPTS.forEach(dep=>deptC[dep]=0);d.forEach(x=>deptC[x.dept]++);
+  const maxD=Math.max(...Object.values(deptC),1);
+  document.getElementById('s-dept').innerHTML=DEPTS.map((dep,i)=>miniBar(dep,deptC[dep],maxD,DEPT_COLORS[i])).join('');
+  const inspC={};d.forEach(x=>inspC[x.inspector]=(inspC[x.inspector]||0)+1);
+  const maxI=Math.max(...Object.values(inspC),1);
+  document.getElementById('s-insp').innerHTML=Object.entries(inspC).sort((a,b)=>b[1]-a[1]).map(([k,v])=>miniBar(k,v,maxI,'#534ab7')).join('');
+  const acts=d.filter(x=>x.type==='Act').length,conds=n-acts;
+  document.getElementById('s-actcond').innerHTML=`
+    <div style="text-align:center;padding:1.25rem;background:var(--surface2);border-radius:var(--radius)">
+      <div style="font-size:36px;font-weight:700;color:#d4537e">${acts}</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-top:5px">Unsafe acts</div>
+      <div style="font-size:12px;color:#d4537e;margin-top:3px">${n?Math.round(acts/n*100):0}% of total</div>
+    </div>
+    <div style="text-align:center;padding:1.25rem;background:var(--surface2);border-radius:var(--radius)">
+      <div style="font-size:36px;font-weight:700;color:#534ab7">${conds}</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-top:5px">Unsafe conditions</div>
+      <div style="font-size:12px;color:#534ab7;margin-top:3px">${n?Math.round(conds/n*100):0}% of total</div>
+    </div>`;
+}
+
+function downloadCSV(scope){
+  const src=scope==='filtered'?filtered:DATA;
+  const headers=['ID','Finding','Type','Hazard','Department','Risk Level','Inspected By','Image Ref','Target Date','Closure Date','Overdue Days','Company'];
+  const rows=src.map(d=>[d.id,`"${d.finding}"`,d.type,d.hazard,d.dept,d.risk,d.inspector,d.img||'',d.target,d.closed||'',d.overdue,'Syed Imran Insp Dashboard Test LTD']);
+  const csv=[headers.join(','),...rows.map(r=>r.join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='HSE_Findings_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('CSV downloaded — '+src.length+' findings exported');
+}
+
+function openModal(){
+  document.getElementById('modal').style.display='flex';
+  document.getElementById('f-target').value=new Date().toISOString().slice(0,10);
+  document.getElementById('form-err').style.display='none';
+}
+function closeModal(){document.getElementById('modal').style.display='none';clearForm();}
+function closeModalOverlay(e){if(e.target===document.getElementById('modal'))closeModal();}
+function clearForm(){
+  ['f-finding','f-inspector','f-img','f-target','f-closed'].forEach(id=>document.getElementById(id).value='');
+  ['f-dept','f-risk','f-type-modal','f-hazard'].forEach(id=>document.getElementById(id).value='');
+}
+
+function calcOverdue(target,closed){
+  if(!target||!closed)return 0;
+  const diff=Math.round((new Date(closed)-new Date(target))/(864e5));
+  return diff>0?diff:0;
+}
+
+function submitFinding(){
+  const finding=document.getElementById('f-finding').value.trim();
+  const dept=document.getElementById('f-dept').value;
+  const risk=document.getElementById('f-risk').value;
+  const type=document.getElementById('f-type-modal').value;
+  const hazard=document.getElementById('f-hazard').value;
+  const inspector=document.getElementById('f-inspector').value.trim();
+  const target=document.getElementById('f-target').value;
+  const closed=document.getElementById('f-closed').value;
+  const img=document.getElementById('f-img').value.trim();
+  const err=document.getElementById('form-err');
+  if(!finding||!dept||!risk||!type||!hazard||!inspector||!target){
+    err.textContent='Please fill in all required fields marked with *.';
+    err.style.display='block';return;
+  }
+  err.style.display='none';
+  const newId=Math.max(...DATA.map(d=>d.id))+1;
+  const newEntry={id:newId,dept,risk,finding,inspector,target,closed,overdue:calcOverdue(target,closed),img:img||`IMG-${String(newId).padStart(3,'0')}.jpg`,type,hazard};
+  DATA.unshift(newEntry);
+  closeModal();
+  const activePage=document.querySelector('.page.active').id;
+  if(activePage==='page-dashboard')renderDashboard();
+  else if(activePage==='page-findings')applyFilters();
+  else renderSummary();
+  showToast(`Finding #${newId} added successfully`);
+}
+
+function deleteFinding(id){
+  if(!confirm('Delete finding #'+id+'? This cannot be undone.'))return;
+  DATA=DATA.filter(d=>d.id!==id);
+  filtered=filtered.filter(d=>d.id!==id);
+  renderTable();renderFindingsStats();
+  showToast('Finding #'+id+' deleted');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+const fDeptEl=document.getElementById('fDept');
+DEPTS.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;fDeptEl.appendChild(o);});
+['fDept','fRisk','fType','fHaz','fOD'].forEach(id=>document.getElementById(id).addEventListener('change',applyFilters));
+document.getElementById('fSearch').addEventListener('input',applyFilters);
+
+const tickerMsgs=[DATA.length+' findings · 6 departments','Hazard classification active','All inspectors reporting','Download findings as CSV','Syed Imran Insp Dashboard Test LTD'];
+let ti=0;
+function rotateTicker(){document.getElementById('ticker').textContent=tickerMsgs[ti++%tickerMsgs.length];}
+rotateTicker();setInterval(rotateTicker,4000);
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-GB');},1000);
+document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-GB');
+
+renderDashboard();
+</script>
+</body>
+</html>
